@@ -38,7 +38,7 @@ commands =
 [testenv:typing]
 description = Run mypy.
 commands =
-    mypy src/nublado2 tests setup.py
+    mypy src/rubin_influx_tools tests setup.py
 
 [testenv:lint]
 description = Lint codebase by running pre-commit (Black, isort, Flake8).
@@ -51,7 +51,7 @@ commands = pre-commit run --all-files
 [tool.coverage.run]
 parallel = true
 branch = true
-source = ["nublado2"]
+source = ["rubin_influx_tools"]
 
 [tool.coverage.paths]
 source = ["src", ".tox/*/site-packages"]
@@ -95,7 +95,6 @@ known_first_party = ["nublado2", "tests"]
 skip = ["docs/conf.py"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "strict"
 python_files = [
     "tests/*.py",
     "tests/*/*.py"

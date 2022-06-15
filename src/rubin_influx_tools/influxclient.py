@@ -58,10 +58,10 @@ class InfluxClient:
             }
         )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Any:
         return self
 
-    async def __aexit__(self, *excinfo):
+    async def __aexit__(self, *excinfo: Any) -> None:
         if self.session:
             await self.session.close()
 
@@ -140,3 +140,8 @@ class InfluxClient:
             o_list.extend(i_list)
             offset += len(i_list)
         return o_list
+
+    async def main(self) -> None:
+        # Override this in a subclass to provide "the thing that the class
+        # should usually do when invoked."
+        pass
