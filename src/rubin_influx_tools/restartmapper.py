@@ -134,6 +134,7 @@ class RestartMapper(InfluxClient):
         url = f"{self.api_url}/{itemtype}"
         obj_list = await self.list_all_with_offset(url, itemtype)
         self.log.debug(f"Checks -> {obj_list}")
+        resp = []
         for c in obj_list:
             if c["name"] == cname:
                 self.check_id = c["id"]
@@ -141,10 +142,11 @@ class RestartMapper(InfluxClient):
         if not self.check_id:
             cc = await self.create_check(cname)
             payloads = [asdict(cc)]
-            await self.post(url, payloads)
+            resp = await self.post(url, payloads)
             # gives a 400 Bad Request right now.
+        return resp
 
-    async def create_check(self, cname):
+    async def create_check(self, cname: str) -> CheckPost:
         dq = DashboardQuery(name=cname, text=check_text)
         ck = CheckPost(
             description=cname,
