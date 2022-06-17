@@ -141,7 +141,15 @@ class InfluxClient:
             offset += len(i_list)
         return o_list
 
+    async def set_org_id(self) -> None:
+        obj = await self.get(
+            self.api_url + "/buckets", params={"pagesize": "1"}
+        )
+        if not obj or "buckets" not in obj or not obj["buckets"]:
+            raise RuntimeError("Could not get orgID from bucket")
+        self.org_id = obj["buckets"][0]["orgID"]
+
     async def main(self) -> None:
         # Override this in a subclass to provide "the thing that the class
         # should usually do when invoked."
-        pass
+        await self.set_org_id()

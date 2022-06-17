@@ -7,18 +7,6 @@ from .influxtypes import Permission, Resource, TokenPost
 
 
 class TokenMaker(InfluxClient):
-    async def set_org_id(self) -> None:
-        """Set the org id; requires org read permission in token"""
-        url = f"{self.api_url}/orgs"
-        obj = await self.get(url)
-        orgs = obj["orgs"]
-        for o in orgs:
-            if o["name"] == self.org:
-                self.org_id = o["id"]
-                self.log.debug(f"Found OrgID: {self.org_id}")
-                return
-        raise RuntimeError(f"Could not determine orgID for org {self.org}")
-
     def define_token(self) -> TokenPost:
         perms: List[Permission] = []
         categories = (

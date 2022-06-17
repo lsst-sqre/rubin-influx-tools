@@ -1,4 +1,7 @@
 from datetime import timedelta
+from os.path import dirname, join
+
+from jinja2 import Template
 
 
 def seconds_to_duration_literal(seconds: int) -> str:
@@ -30,3 +33,17 @@ def seconds_to_duration_literal(seconds: int) -> str:
         if secs:
             dls += f"{secs}s"
     return dls
+
+
+def get_template(
+    name: str,
+    template_marker: str = "_tmpl.flux",
+    dir: str = join(dirname(__file__), "templates"),
+) -> Template:
+    """Convenience function for retrieving a Jinja2 Template from a static
+    templated query.
+    """
+    fn = join(dir, name + template_marker)
+    with open(fn) as f:
+        txt = f.read()
+    return Template(txt)  # the shared default environment is fine
