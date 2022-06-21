@@ -4,12 +4,12 @@ import sys
 from os.path import basename
 from typing import Dict
 
-from . import BucketMapper, InfluxClient, RestartMapper, TokenMaker
+from . import BucketMapper, InfluxClient, TaskMaker, TokenMaker
 
 KLASSMAP: Dict[str, type[InfluxClient]] = {
     "bucketmapper": BucketMapper,
     "tokenmaker": TokenMaker,
-    "restartmapper": RestartMapper,
+    "taskmaker": TaskMaker,
 }
 
 
@@ -34,13 +34,13 @@ async def bucketmapper() -> None:
 
 
 async def tokenmaker() -> None:
-    async with TokenMaker() as bm:
-        await bm.main()
+    async with TokenMaker() as tm:
+        await tm.main()
 
 
-async def restartmapper() -> None:
-    async with RestartMapper() as bm:
-        await bm.main()
+async def taskmaker() -> None:
+    async with TaskMaker() as tm:
+        await tm.main()
 
 
 if __name__ == "__main__":

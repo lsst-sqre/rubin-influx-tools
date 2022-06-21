@@ -37,13 +37,14 @@ def seconds_to_duration_literal(seconds: int) -> str:
 
 def get_template(
     name: str,
+    prefix: str = "",
     template_marker: str = "_tmpl.flux",
     dir: str = join(dirname(__file__), "templates"),
 ) -> Template:
     """Convenience function for retrieving a Jinja2 Template from a static
     templated query.
     """
-    fn = join(dir, name + template_marker)
+    fn = join(dir, prefix + name + template_marker)
     with open(fn) as f:
         txt = f.read()
     return Template(txt)  # the shared default environment is fine
