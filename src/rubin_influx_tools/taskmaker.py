@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 from dataclasses import asdict
-from typing import Any, List
+from typing import List
 
 from .influxclient import InfluxClient
 from .influxfns import get_template, seconds_to_duration_literal
 from .influxtypes import (
     BucketGet,
     BucketPost,
-    CheckPost,
-    DashboardQuery,
     RetentionRule,
     TaskGet,
     TaskPost,
 )
 
+slack_timing = {
+    "restart": {"every": "1m", "offset": "30s"},
+    "memory_check": {"every": "5m", "offset": "43s"},
+}
 
-class RestartMapper(InfluxClient):
+
+class TaskMaker(InfluxClient):
     """The logic needed to build alerts and tasks for applications."""
 
     async def list_buckets(self) -> List[BucketGet]:
@@ -68,28 +71,52 @@ class RestartMapper(InfluxClient):
 
     async def construct_tasks(self) -> None:
         extant_tasks = await self.list_tasks()
-        extant_tnames = [x.name for x in extant_tasks]
+        self._extant_tnames = [x.name for x in extant_tasks]
+
+        for ttype in "restart", "memory_check":
+            await self.construct_named_tasks(ttype)
+            await self.construct_slack_task(ttype)
+
+    async def construct_named_tasks(self, ttype: str) -> None:
         apps_needing_tasks = [
             x
             for x in self.app_names
-            if f"{x.capitalize()} restarts" not in extant_tnames
+            if f"{x.capitalize()} {ttype}s" not in self._extant_tnames
         ]
-        self.log.debug(f"Apps needing tasks -> {apps_needing_tasks}")
+        self.log.debug(f"Apps needing {ttype} tasks -> {apps_needing_tasks}")
 
-        new_tasks = self.build_tasks(apps_needing_tasks)
+        new_tasks = await self.build_tasks(apps_needing_tasks, ttype)
         payloads = [asdict(x) for x in new_tasks]
         url = f"{self.api_url}/tasks"
         await self.post(url, payloads)
 
-    def build_tasks(self, apps: List[str]) -> List[TaskPost]:
+    async def construct_slack_task(self, ttype: str) -> None:
+        every = slack_timing[ttype]["every"]
+        offset = slack_timing[ttype]["offset"]
+        tname = f"_slack_notify_{ttype}s"
+        if tname in self._extant_tnames:
+            return
+        task_text = get_template(ttype, template_marker="_slack.flux")
+        task = TaskPost(
+            description=tname,
+            org=self.org,
+            orgID=self.org_id,
+            status="active",
+            flux=task_text.render(offset=offset, every=every, taskname=tname),
+        )
+        payload = [asdict(task)]
+        url = f"{self.api_url}/tasks"
+        await self.post(url, payload)
+
+    async def build_tasks(self, apps: List[str], ttype: str) -> List[TaskPost]:
         """Create a list of task objects to post."""
-        task_template = get_template("restart")
+        task_template = get_template(ttype)
         tasks = []
         offset = 0
         for app in apps:
             offset %= 60
             offsetstr = seconds_to_duration_literal(offset)
-            taskname = f"{app.capitalize()} restarts"
+            taskname = f"{app.capitalize()} {ttype}s"
             tasks.append(
                 TaskPost(
                     description=taskname,
@@ -97,7 +124,10 @@ class RestartMapper(InfluxClient):
                     orgID=self.org_id,
                     status="active",
                     flux=task_template.render(
-                        taskname=taskname, app_bucket=app, offset=offsetstr
+                        taskname=taskname,
+                        app_bucket=app,
+                        offset=offsetstr,
+                        every="1m",
                     ),
                 )
             )
@@ -113,37 +143,6 @@ class RestartMapper(InfluxClient):
         tasks = [TaskGet(**x) for x in obj_list]
         self.log.debug(f"Tasks -> {[x for x in tasks]}")
         return tasks
-
-    async def construct_check(self) -> List[Any]:
-        self.check_id = ""
-        cname = "K8s app restarts TEST"
-        itemtype = "checks"
-        url = f"{self.api_url}/{itemtype}"
-        obj_list = await self.list_all_with_offset(url, itemtype)
-        self.log.debug(f"Checks -> {obj_list}")
-        resp = []
-        for c in obj_list:
-            if c["name"] == cname:
-                self.check_id = c["id"]
-                break
-        if not self.check_id:
-            cc = await self.create_check(cname)
-            payloads = [asdict(cc)]
-            resp = await self.post(url, payloads)
-            # gives a 400 Bad Request right now.
-        return resp
-
-    async def create_check(self, cname: str) -> CheckPost:
-        check_template = get_template("check")
-        check_flux = check_template.render()
-        dq = DashboardQuery(name=cname, text=check_flux)
-        ck = CheckPost(
-            description=cname,
-            every="1m",
-            orgID=self.org_id,
-            query=dq,
-        )
-        return ck
 
     async def main(self) -> None:
         await self.set_org_id()

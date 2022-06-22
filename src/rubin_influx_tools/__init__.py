@@ -1,7 +1,7 @@
 from .bucketmapper import BucketMapper
 from .influxclient import InfluxClient
 from .influxfns import get_template, seconds_to_duration_literal
-from .restartmapper import RestartMapper
+from .taskmaker import TaskMaker
 from .tokenmaker import TokenMaker
 
 __all__ = [
@@ -10,5 +10,5 @@ __all__ = [
     "get_template",
     "BucketMapper",
     "TokenMaker",
-    "RestartMapper",
+    "TaskMaker",
 ]
