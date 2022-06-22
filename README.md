@@ -69,10 +69,11 @@ whose `main()` function queries the buckets in an organization to find
 K8s applications, and then determines whether there's a bucket to collect
 cross-application results and creates it if necessary.  Then it checks
 to see whether each application bucket is matched to a task to watch
-that application for pod restarts, creates any tasks it needs to.
-Finally, it creates tasks to periodically check the cross-application
-bucket (called `multiapp_`) for entries indicating that it needs to send
-an alert to Slack.
+that application for pod restarts and pod-not-running states creates any
+tasks it needs to.  Finally, it creates tasks to periodically check the
+cross-application bucket (called `multiapp_`) for entries indicating
+that it needs to send an alert to Slack, as well as a check for
+Roundtable node disk space (also alerted to Slack).
 
 The Slack webhook URL is stored within InfluxDB2 as a (manually-created)
 secret.
@@ -112,5 +113,3 @@ built upon release by Github Actions CI.
 
 The Rubin Observatory Influx Tools are licensed under the
 [MIT License](./LICENSE).
-
-
