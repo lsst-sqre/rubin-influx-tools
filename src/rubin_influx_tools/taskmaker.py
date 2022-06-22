@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from dataclasses import asdict
-from typing import List
+from typing import Dict, List, Union
 
 from .influxclient import InfluxClient
 from .influxfns import get_template, seconds_to_duration_literal
@@ -12,15 +12,20 @@ from .influxtypes import (
     TaskPost,
 )
 
-slack_timing = {
-    "restart": {"every": "1m", "offset": "30s"},
-    "memory_check": {"every": "5m", "offset": "43s"},
-    "disk_check": {"every": "5m", "offset": "56s"},
-}
-
 
 class TaskMaker(InfluxClient):
     """The logic needed to build alerts and tasks for applications."""
+
+    async def init_resources(self) -> None:
+        self.timing: Dict[str, Dict[str, Union[str, bool]]] = {
+            "restart": {"every": "1m", "offset": "30s", "app": True},
+            "memory_check": {"every": "5m", "offset": "43s", "app": True},
+            "disk_check": {"every": "5m", "offset": "56s", "app": False},
+            "state_check": {"every": "5m", "offset": "17s", "app": True},
+        }
+        self.buckets = await self.list_buckets()
+        app_buckets = await self.find_application_buckets(self.buckets)
+        self.app_names = [x.name for x in app_buckets]
 
     async def list_buckets(self) -> List[BucketGet]:
         """List all buckets."""
@@ -41,15 +46,10 @@ class TaskMaker(InfluxClient):
             b for b in buckets if b.name[0] != "_" and b.name[-1] != "_"
         ]
         self.log.debug(f"App Buckets -> {[x.name for x in app_buckets]}")
-        self.app_names = [x.name for x in app_buckets]
         return app_buckets
 
     async def construct_multiapp_bucket(self) -> None:
-        buckets = await self.list_buckets()
-        if not buckets:
-            return
-        await self.find_application_buckets(buckets)
-        bnames = [x.name for x in buckets]
+        bnames = [x.name for x in self.buckets]
         if "multiapp_" in bnames:
             return
         self.log.debug("Constructing multiapp_ bucket")
@@ -73,12 +73,16 @@ class TaskMaker(InfluxClient):
     async def construct_tasks(self) -> None:
         extant_tasks = await self.list_tasks()
         self._extant_tnames = [x.name for x in extant_tasks]
+        offset_mult = 0
+        for k in self.timing:
+            await self.construct_slack_task(k)
+            if self.timing[k]["app"]:
+                await self.construct_named_tasks(k)
+            offset_mult += 1
 
-        for ttype in "restart", "memory_check", "disk_check":
-            await self.construct_named_tasks(ttype)
-            await self.construct_slack_task(ttype)
-
-    async def construct_named_tasks(self, ttype: str) -> None:
+    async def construct_named_tasks(
+        self, ttype: str, offset_mult: int = 0
+    ) -> None:
         apps_needing_tasks = [
             x
             for x in self.app_names
@@ -86,14 +90,16 @@ class TaskMaker(InfluxClient):
         ]
         self.log.debug(f"Apps needing {ttype} tasks -> {apps_needing_tasks}")
 
-        new_tasks = await self.build_tasks(apps_needing_tasks, ttype)
+        new_tasks = await self.build_tasks(
+            apps_needing_tasks, ttype, offset_mult
+        )
         payloads = [asdict(x) for x in new_tasks]
         url = f"{self.api_url}/tasks"
         await self.post(url, payloads)
 
     async def construct_slack_task(self, ttype: str) -> None:
-        every = slack_timing[ttype]["every"]
-        offset = slack_timing[ttype]["offset"]
+        every = self.timing[ttype]["every"]
+        offset = self.timing[ttype]["offset"]
         tname = f"_slack_notify_{ttype}s"
         if tname in self._extant_tnames:
             return
@@ -111,16 +117,13 @@ class TaskMaker(InfluxClient):
         url = f"{self.api_url}/tasks"
         await self.post(url, payload)
 
-    async def build_tasks(self, apps: List[str], ttype: str) -> List[TaskPost]:
+    async def build_tasks(
+        self, apps: List[str], ttype: str, offset_mult: int = 0
+    ) -> List[TaskPost]:
         """Create a list of task objects to post."""
-        try:
-            task_template = get_template(ttype, template_marker="_tmpl.flux")
-        except FileNotFoundError:
-            # This is OK for disk checks
-            self.log.warning(f"No application task template for '{ttype}'")
-            return []
+        task_template = get_template(ttype, template_marker="_tmpl.flux")
         tasks = []
-        offset = 0
+        offset = len(self.app_names) * offset_mult
         for app in apps:
             offset %= 60
             offsetstr = seconds_to_duration_literal(offset)
@@ -155,9 +158,7 @@ class TaskMaker(InfluxClient):
         return tasks
 
     async def main(self) -> None:
+        await self.init_resources()
         await self.set_org_id()
         await self.construct_multiapp_bucket()
         await self.construct_tasks()
-        # At the moment, building the check isn't working.
-        # However the manual check/alerts are fine.
-        # await self.construct_check()
