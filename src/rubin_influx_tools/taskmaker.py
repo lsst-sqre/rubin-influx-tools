@@ -15,6 +15,7 @@ from .influxtypes import (
 slack_timing = {
     "restart": {"every": "1m", "offset": "30s"},
     "memory_check": {"every": "5m", "offset": "43s"},
+    "disk_check": {"every": "5m", "offset": "56s"},
 }
 
 
@@ -73,7 +74,7 @@ class TaskMaker(InfluxClient):
         extant_tasks = await self.list_tasks()
         self._extant_tnames = [x.name for x in extant_tasks]
 
-        for ttype in "restart", "memory_check":
+        for ttype in "restart", "memory_check", "disk_check":
             await self.construct_named_tasks(ttype)
             await self.construct_slack_task(ttype)
 
@@ -96,13 +97,15 @@ class TaskMaker(InfluxClient):
         tname = f"_slack_notify_{ttype}s"
         if tname in self._extant_tnames:
             return
-        task_text = get_template(ttype, template_marker="_slack.flux")
+        task_template = get_template(ttype, template_marker="_slack.flux")
         task = TaskPost(
             description=tname,
             org=self.org,
             orgID=self.org_id,
             status="active",
-            flux=task_text.render(offset=offset, every=every, taskname=tname),
+            flux=task_template.render(
+                offset=offset, every=every, taskname=tname
+            ),
         )
         payload = [asdict(task)]
         url = f"{self.api_url}/tasks"
@@ -110,12 +113,19 @@ class TaskMaker(InfluxClient):
 
     async def build_tasks(self, apps: List[str], ttype: str) -> List[TaskPost]:
         """Create a list of task objects to post."""
-        task_template = get_template(ttype)
+        try:
+            task_template = get_template(ttype, template_marker="_tmpl.flux")
+        except FileNotFoundError:
+            # This is OK for disk checks
+            self.log.warning(f"No application task template for '{ttype}'")
+            return []
         tasks = []
         offset = 0
         for app in apps:
             offset %= 60
             offsetstr = seconds_to_duration_literal(offset)
+            if offsetstr == "infinite":
+                offsetstr = "0s"
             taskname = f"{app.capitalize()} {ttype}s"
             tasks.append(
                 TaskPost(
