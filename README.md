@@ -1,5 +1,16 @@
 # rubin-influx-tools
 
+## Bucket and task nomenclature
+
+Our `monitoring` InfluxDBv2 instance assumes that any bucket whose name
+neither starts with nor ends with an underscore represents a Kubernetes
+application bucket.  Bucket names ending with an underscore are for
+measurements that do not pertain to a single Kubernetes application;
+some, like `multiapp_`, are used to collect measurements across multiple
+applications, while others like `roundtable_internal_` measure
+host-level resource usage from Roundtable itself rather than the
+satellite RSP instances being monitored.
+
 ## Bucketmapper
 
 ### Motivation
@@ -39,10 +50,10 @@ whose `main()` method, when supplied with an *admin* `INFLUXDB_TOKEN`
 will create a new token with sufficient permissions to create tasks for
 new application buckets it finds, but not full admin rights.  This only
 has to be run once per InfluxDB v2 installation, but does need to
-precede running `restartmapper`, since the generated token is the one
-`restartmapper` should use.
+precede running `taskmaker`, since the generated token is the one
+`taskmaker` should use.
 
-## Restartmapper
+## Taskmaker
 
 ### Motivation
 
@@ -53,14 +64,18 @@ error-prone to do manually.
 
 ### Implementation
 
-[restartmapper](./src/rubin_influx_tools/restartmapper.py) is a Python 3 class
+[taskmaker](./src/rubin_influx_tools/taskmaker.py) is a Python 3 class
 whose `main()` function queries the buckets in an organization to find
-K8s applications, checks to see whether each bucket is matched to a task
-to watch that application for pod restarts, and creates any tasks it
-finds missing.
+K8s applications, and then determines whether there's a bucket to collect
+cross-application results and creates it if necessary.  Then it checks
+to see whether each application bucket is matched to a task to watch
+that application for pod restarts, creates any tasks it needs to.
+Finally, it creates tasks to periodically check the cross-application
+bucket (called `multiapp_`) for entries indicating that it needs to send
+an alert to Slack.
 
-Currently creation of the subsequent check and alert notification rules
-is manual.
+The Slack webhook URL is stored within InfluxDB2 as a (manually-created)
+secret.
 
 ## Configuration
 
