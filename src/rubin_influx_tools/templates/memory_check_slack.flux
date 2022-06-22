@@ -31,7 +31,7 @@ from(bucket: "multiapp_")
 	    ({
 		channel: "roundtable-test-notifications",
 		text: "${r.cluster}/${r.container_name}/${r.pod_name} at ${r._time}: ${r._value}% of memory used",
-		color: colorLevel(v: r.value),
+		color: colorLevel(v: r._value),
 	    }),
     )()
     |> yield()
