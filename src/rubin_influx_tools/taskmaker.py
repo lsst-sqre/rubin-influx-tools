@@ -19,10 +19,12 @@ class TaskMaker(InfluxClient):
     async def init_resources(self) -> None:
         self.timing: Dict[str, Dict[str, Union[str, bool]]] = {
             "restart": {"every": "1m", "offset": "30s", "app": True},
-            "memory_check": {"every": "5m", "offset": "43s", "app": True},
             "disk_check": {"every": "5m", "offset": "56s", "app": False},
             "state_check": {"every": "5m", "offset": "17s", "app": True},
         }
+        # This is far too spammy, but leave it around so we remember
+        #  how to reenable it.
+        # "memory_check": {"every": "5m", "offset": "43s", "app": True},
         self.buckets = await self.list_buckets()
         app_buckets = await self.find_application_buckets(self.buckets)
         self.app_names = [x.name for x in app_buckets]
