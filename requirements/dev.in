@@ -11,3 +11,4 @@ pre-commit
 coverage[toml]
 mypy
 pytest
+types-PyYAML
