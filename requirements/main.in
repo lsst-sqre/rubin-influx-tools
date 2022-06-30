@@ -1,2 +1,4 @@
 aiohttp
+GitPython
 Jinja2
+pyyaml

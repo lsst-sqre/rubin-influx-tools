@@ -4,9 +4,10 @@ import sys
 from os.path import basename
 from typing import Dict
 
-from . import BucketMapper, InfluxClient, TaskMaker, TokenMaker
+from . import BucketMaker, BucketMapper, InfluxClient, TaskMaker, TokenMaker
 
 KLASSMAP: Dict[str, type[InfluxClient]] = {
+    "bucketmaker": BucketMaker,
     "bucketmapper": BucketMapper,
     "tokenmaker": TokenMaker,
     "taskmaker": TaskMaker,
@@ -26,6 +27,11 @@ async def async_main() -> None:
     except KeyError:
         errstr = f"'{me}' is not any of {list(KLASSMAP.keys())}"
         raise RuntimeError(errstr)
+
+
+async def bucketmaker() -> None:
+    async with BucketMaker() as bm:
+        await bm.main()
 
 
 async def bucketmapper() -> None:

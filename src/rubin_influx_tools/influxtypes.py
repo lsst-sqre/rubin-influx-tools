@@ -150,10 +150,6 @@ class TaskPost:
 class Resource:
     """Resource for permissions to apply to."""
 
-    id: str = ""
-    name: str = ""
-    org: str = ""
-    orgID: str = ""
     type: str = ""
 
 
@@ -173,7 +169,6 @@ class TokenPost:
     orgID: str = ""
     permissions: List[Permission] = field(default_factory=list)
     status: str = "active"
-    userID: str = ""
 
 
 @dataclass
