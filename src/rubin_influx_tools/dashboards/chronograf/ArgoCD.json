@@ -1,0 +1,283 @@
+{
+	"meta": {
+		"chronografVersion": "1.9.4",
+		"sources": {
+			"1": {
+				"name": "InfluxDB",
+				"link": "/chronograf/v1/sources/1"
+			}
+		}
+	},
+	"dashboard": {
+		"id": "5",
+		"cells": [
+			{
+				"i": "58826861-a91e-46df-abfe-9a7a3271de67",
+				"x": 4,
+				"y": 0,
+				"w": 4,
+				"h": 4,
+				"name": "Pending requests",
+				"queries": [
+					{
+						"query": "from(bucket: \"argocd\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_repo_server\")\n  |> filter(fn: (r) => r[\"_field\"] == \"argocd_repo_pending_request_total\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: max, createEmpty: false)\n  |> yield(name: \"max\")",
+						"queryConfig": {
+							"database": "",
+							"measurement": "",
+							"retentionPolicy": "",
+							"fields": [],
+							"tags": {},
+							"groupBy": {
+								"time": "",
+								"tags": []
+							},
+							"areTagsAccepted": false,
+							"rawText": "from(bucket: \"argocd\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_repo_server\")\n  |> filter(fn: (r) => r[\"_field\"] == \"argocd_repo_pending_request_total\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: max, createEmpty: false)\n  |> yield(name: \"max\")",
+							"range": null,
+							"shifts": null
+						},
+						"source": "",
+						"type": "flux"
+					}
+				],
+				"axes": {
+					"x": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y": {
+						"bounds": [
+							"0",
+							""
+						],
+						"label": "requests",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y2": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					}
+				},
+				"type": "line-stepplot",
+				"colors": [
+					{
+						"id": "eeb13a5b-b97f-4a83-a556-3b5ead939719",
+						"type": "scale",
+						"hex": "#31C0F6",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "3f6e9461-c7cd-47b9-8d17-9f8c826efd45",
+						"type": "scale",
+						"hex": "#A500A5",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "eddcbaa1-6dfc-463c-8e1a-3e6134e45ef9",
+						"type": "scale",
+						"hex": "#FF7E27",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					}
+				],
+				"legend": {},
+				"tableOptions": {
+					"verticalTimeAxis": true,
+					"sortBy": {
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					},
+					"wrapping": "truncate",
+					"fixFirstColumn": true
+				},
+				"fieldOptions": [
+					{
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					}
+				],
+				"timeFormat": "MM/DD/YYYY HH:mm:ss",
+				"decimalPlaces": {
+					"isEnforced": true,
+					"digits": 2
+				},
+				"note": "",
+				"noteVisibility": "default",
+				"links": {
+					"self": "/chronograf/v1/dashboards/5/cells/58826861-a91e-46df-abfe-9a7a3271de67"
+				}
+			},
+			{
+				"i": "c2d38f41-3265-443a-8000-9f566c8b1ceb",
+				"x": 0,
+				"y": 0,
+				"w": 4,
+				"h": 4,
+				"name": "Git requests",
+				"queries": [
+					{
+						"query": "from(bucket: \"argocd\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_repo_server\")\n  |> filter(fn: (r) => r[\"_field\"] == \"argocd_git_request_total\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+						"queryConfig": {
+							"database": "",
+							"measurement": "",
+							"retentionPolicy": "",
+							"fields": [],
+							"tags": {},
+							"groupBy": {
+								"time": "",
+								"tags": []
+							},
+							"areTagsAccepted": false,
+							"rawText": "from(bucket: \"argocd\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_repo_server\")\n  |> filter(fn: (r) => r[\"_field\"] == \"argocd_git_request_total\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+							"range": null,
+							"shifts": null
+						},
+						"source": "",
+						"type": "flux"
+					}
+				],
+				"axes": {
+					"x": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y": {
+						"bounds": [
+							"0",
+							""
+						],
+						"label": "requests",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y2": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					}
+				},
+				"type": "line",
+				"colors": [
+					{
+						"id": "eeb13a5b-b97f-4a83-a556-3b5ead939719",
+						"type": "scale",
+						"hex": "#31C0F6",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "3f6e9461-c7cd-47b9-8d17-9f8c826efd45",
+						"type": "scale",
+						"hex": "#A500A5",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "eddcbaa1-6dfc-463c-8e1a-3e6134e45ef9",
+						"type": "scale",
+						"hex": "#FF7E27",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					}
+				],
+				"legend": {},
+				"tableOptions": {
+					"verticalTimeAxis": true,
+					"sortBy": {
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					},
+					"wrapping": "truncate",
+					"fixFirstColumn": true
+				},
+				"fieldOptions": [
+					{
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					}
+				],
+				"timeFormat": "MM/DD/YYYY HH:mm:ss",
+				"decimalPlaces": {
+					"isEnforced": true,
+					"digits": 2
+				},
+				"note": "",
+				"noteVisibility": "default",
+				"links": {
+					"self": "/chronograf/v1/dashboards/5/cells/c2d38f41-3265-443a-8000-9f566c8b1ceb"
+				}
+			}
+		],
+		"templates": [
+			{
+				"tempVar": ":cluster:",
+				"values": [
+					{
+						"value": "base-lsp.lsst.codes",
+						"type": "tagValue",
+						"selected": true
+					}
+				],
+				"id": "fddd4b4a-fa52-498e-b519-71c0166a7716",
+				"type": "tagValues",
+				"label": "",
+				"query": {
+					"influxql": "SHOW TAG VALUES ON :database: FROM :measurement: WITH KEY=:tagKey:",
+					"db": "argocd",
+					"measurement": "kubernetes_pod_container",
+					"tagKey": "cluster",
+					"fieldKey": ""
+				},
+				"sourceID": "dynamic",
+				"links": {
+					"self": "/chronograf/v1/dashboards/5/templates/fddd4b4a-fa52-498e-b519-71c0166a7716"
+				}
+			}
+		],
+		"name": "ArgoCD",
+		"organization": "default",
+		"links": {
+			"self": "/chronograf/v1/dashboards/5",
+			"cells": "/chronograf/v1/dashboards/5/cells",
+			"templates": "/chronograf/v1/dashboards/5/templates"
+		}
+	}
+}
