@@ -1,0 +1,8 @@
+from(bucket: "argocd")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["cluster"] == v.cluster)
+  |> filter(fn: (r) => r["_measurement"] == "prometheus_repo_server")
+  |> filter(fn: (r) => r["_field"] == "argocd_git_request_total")
+  |> drop(columns: ["_measurement", "_field", "_start", "_stop", "cluster", "prometheus_app", "url"])
+  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+  |> yield(name: "mean")

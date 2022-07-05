@@ -1,0 +1,8 @@
+from(bucket: v.K8s_application)
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["cluster"] == v.cluster)
+  |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
+  |> filter(fn: (r) => r["_field"] == "memory_usage_bytes")
+  |> drop(columns: ["_measurement", "_field", "_start", "_stop", "host", "node_name", "namespace"])
+  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+  |> yield(name: "mean")
