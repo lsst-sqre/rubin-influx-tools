@@ -11,7 +11,7 @@ from(bucket: "{{app_bucket}}")
                       "_stop",
                       "host",
                       "namespace"])
-    |> aggregateWindow(every: 10s, fn: mean, createEmpty: false)
+    |> aggregateWindow(every: 10s, fn: max, createEmpty: false)
     |> tail(n: 2)
     |> difference(columns: ["_value"])
     |> map(fn: (r) => ({
@@ -28,5 +28,4 @@ from(bucket: "{{app_bucket}}")
             state: r.state
           })
         )
-    |> yield(name: "mean")
     |> to(bucket: "multiapp_", org: "square")

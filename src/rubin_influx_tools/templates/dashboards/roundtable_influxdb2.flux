@@ -1,0 +1,7 @@
+from(bucket: "roundtable_prometheus_")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "prometheus_influxdb2")
+  |> filter(fn: (r) => r["_field"] == "storage_writer_ok_points_sum")
+  |> drop(columns:["_measurement", "_field", "_start", "_stop", "cluster", "path", "prometheus_app", "url"])
+  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+  |> yield(name: "mean")
