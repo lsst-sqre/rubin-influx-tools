@@ -30,7 +30,7 @@ from(bucket: "multiapp_")
         mapFn: (r) =>
             ({
                 channel: "roundtable-test-notifications",
-                text: "${r.cluster}/${r.container_name}/${r.pod_name} at ${r._time}: state ${r.state} (${r.state_reason}), phase ${r.phase} (${r.phase_reason}), readiness ${r.readiness}",
+                text: "${r.cluster}/${r.container_name}/${r.pod_name} at ${r._time}: state ${r.state}, phase ${r.phase}, readiness ${r.readiness}",
                 color: colorLevel(v: r._value),
             }),
     )()
