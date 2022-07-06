@@ -18,7 +18,7 @@ from(bucket: "multiapp_")
 	mapFn: (r) =>
 	    ({
 		channel: "roundtable-test-notifications",
-		text: "Restart(s) for ${r.cluster}/${r.container_name}/${r.pod_name} at ${r._time}: ${r._value}",
+		text: "Restart(s) for ${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: ${r._value}",
 		color: "danger",
 	    }),
     )()
