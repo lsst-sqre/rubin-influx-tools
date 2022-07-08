@@ -9,9 +9,9 @@ slackurl = secrets.get(key: "slack_notify_url")
 toSlack = slack.endpoint(url: slackurl)
 
 from(bucket: "multiapp_")
-    |> range(start: -2m)
+    |> range(start: -5m)
     |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
-    |> filter(fn: (r) => r["_field"] == "restarts_total")
+    |> filter(fn: (r) => r["_field"] == "differential_restarts")
     |> group(columns: ["_time"])
     |> filter(fn: (r) => r._value != 0)
     |> toSlack(

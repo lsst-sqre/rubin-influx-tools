@@ -3,7 +3,7 @@ option v = {bucket: "_monitoring", timeRangeStart: -1h, timeRangeStop: now(), wi
 option task = {name: "{{taskname}}", every: {{every}}, offset: {{offset}} }
 
 from(bucket: "{{app_bucket}}")
-  |> range(start: -15m)
+  |> range(start: -5m)
   |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
   |> filter(fn: (r) => (r["_field"] == "state_code"))
   |> filter(fn: (r) => (r["_value"] != 0))

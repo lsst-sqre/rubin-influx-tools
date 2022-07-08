@@ -21,7 +21,7 @@ colorLevel = (v) => {
 }
 
 from(bucket: "multiapp_")
-    |> range(start: -2m)
+    |> range(start: -5m)
     |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
     |> filter(fn: (r) => r["_field"] == "state_code")
     |> group(columns: ["_time"])
