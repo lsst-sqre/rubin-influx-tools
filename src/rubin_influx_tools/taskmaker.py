@@ -17,7 +17,7 @@ class TaskMaker(InfluxClient):
 
     async def init_resources(self) -> None:
         self.timing: Dict[str, Dict[str, Union[str, bool]]] = {
-            "restart": {"every": "1m", "offset": "30s", "app": True},
+            "restart": {"every": "5m", "offset": "30s", "app": True},
             "disk_check": {"every": "5m", "offset": "56s", "app": False},
             "state_check": {"every": "5m", "offset": "17s", "app": True},
         }
@@ -141,7 +141,7 @@ class TaskMaker(InfluxClient):
                         taskname=taskname,
                         app_bucket=app,
                         offset=offsetstr,
-                        every="1m",
+                        every="2m30s",
                     ),
                 )
             )
