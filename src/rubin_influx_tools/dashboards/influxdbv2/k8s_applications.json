@@ -32,7 +32,7 @@
       },
       {
        "type": "cell",
-       "id": "09a7b8fc0131a000"
+       "id": "09aa1c3c2db1a000"
       }
      ]
     },
@@ -106,7 +106,7 @@
     }
    },
    {
-    "id": "09a7b8fc0131a000",
+    "id": "09aa1c3c2db1a000",
     "type": "cell",
     "attributes": {
      "x": 0,
@@ -118,7 +118,7 @@
      "view": {
       "data": {
        "type": "view",
-       "id": "09a7b8fc0131a000"
+       "id": "09aa1c3c2db1a000"
       }
      }
     }
@@ -354,7 +354,7 @@
       "shape": "chronograf-v2",
       "queries": [
        {
-        "text": "t1 = from(bucket: v.K8s_application)\n   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n   |> filter(fn: (r) => r[\"_measurement\"] == \"kubernetes_pod_container\")\n   |> filter(fn: (r) => r[\"_field\"] == \"resource_limits_memory_bytes\")\n   |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n   |> drop(columns: [\"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n   |> last()\n   |> findRecord(idx:0, fn: (key) => key._field == \"resource_limits_memory_bytes\")\n\nfrom(bucket: v.K8s_application)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"kubernetes_pod_container\")\n  |> filter(fn: (r) => r[\"_field\"] == \"memory_usage_bytes\")\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> drop(columns: [\"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")  //|> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n  |> map(fn: (r) => ({r with fb: float(v: r.memory_usage_bytes)}))\n  |> map(fn: (r) => ({r with fl: float(v: t1._value)}))\n  |> map(fn: (r) => ({r with _value: float(v: 100.0 * (float(v: r.fb)/float(v: r.fl)))})) \n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")\n  ",
+        "text": "\n\n\nfrom(bucket: v.K8s_application)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"kubernetes_pod_container\")\n  |> filter(fn: (r) => r[\"_field\"] == \"memory_usage_bytes\" or r[\"_field\"] == \"resource_limits_memory_bytes\" )\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> drop(columns: [\"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n  |> group()\n  |> group(columns: [\"pod_name\", \"container_name\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => exists r.resource_limits_memory_bytes and exists r.memory_usage_bytes)//|> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n  |> map(fn: (r) => ({r with fb: float(v: r.memory_usage_bytes)}))\n  |> map(fn: (r) => ({r with fl: float(v: r.resource_limits_memory_bytes)}))\n  |> map(fn: (r) => ({r with _value: float(v: 100.0 * (float(v: r.fb)/float(v: r.fl)))})) \n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")\n  ",
         "editMode": "advanced",
         "name": "",
         "builderConfig": {
@@ -458,14 +458,14 @@
    },
    {
     "type": "view",
-    "id": "09a7b8fc0131a000",
+    "id": "09aa1c3c2db1a000",
     "attributes": {
      "name": "Pod CPU usage vs limit",
      "properties": {
       "shape": "chronograf-v2",
       "queries": [
        {
-        "text": "t1 = from(bucket: v.K8s_application)\n   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n   |> filter(fn: (r) => r[\"_measurement\"] == \"kubernetes_pod_container\")\n   |> filter(fn: (r) => r[\"_field\"] == \"resource_limits_millicpu_units\")\n   |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n   |> drop(columns: [\"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n   |> last()\n   |> findRecord(idx:0, fn: (key) => key._field == \"resource_limits_millicpu_units\")\n\nfrom(bucket: v.K8s_application)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"kubernetes_pod_container\")\n  |> filter(fn: (r) => r[\"_field\"] == \"cpu_usage_nanocores\")\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> drop(columns: [\"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")  //|> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n  |> map(fn: (r) => ({r with fc: (float(v: r.cpu_usage_nanocores) / 1000000.0) }))\n  |> map(fn: (r) => ({r with fl: float(v: t1._value)}))\n  |> map(fn: (r) => ({r with _value: float(v: 100.0 * (float(v: r.fc)/float(v: r.fl)))})) \n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")\n  ",
+        "text": "from(bucket: v.K8s_application)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"kubernetes_pod_container\")\n  |> filter(fn: (r) => r[\"_field\"] == \"cpu_usage_nanocores\" or r[\"_field\"] == \"resource_limits_millicpu_units\" )\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> drop(columns: [\"_start\", \"_stop\", \"host\", \"node_name\", \"namespace\"])\n  |> group()\n  |> group(columns: [\"pod_name\", \"container_name\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => exists r.resource_limits_millicpu_units and exists r.cpu_usage_nanocores)\n  |> map(fn: (r) => ({r with fb: float(v: r.cpu_usage_nanocores) }))\n  |> map(fn: (r) => ({r with fl: float(v: r.resource_limits_millicpu_units) * 1000000.0 })) // Convert to nanocores\n  |> map(fn: (r) => ({r with _value: float(v: 100.0 * (float(v: r.fb)/float(v: r.fl)))})) \n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
         "editMode": "advanced",
         "name": "",
         "builderConfig": {
