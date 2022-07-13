@@ -20,6 +20,7 @@ class TaskMaker(InfluxClient):
             "restart": {"every": "5m", "offset": "30s", "app": True},
             "disk_check": {"every": "5m", "offset": "56s", "app": False},
             "state_check": {"every": "5m", "offset": "17s", "app": True},
+            "cpu_check": {"every": "5m", "offset": "43s", "app": True},
         }
         # This is far too spammy, but leave it around so we remember
         #  how to reenable it.
