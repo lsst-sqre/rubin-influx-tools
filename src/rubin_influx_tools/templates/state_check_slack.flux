@@ -1,4 +1,5 @@
 import "slack"
+import "strings"
 
 option v = {bucket: "_monitoring", timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
 
@@ -44,6 +45,8 @@ from(bucket: "multiapp_")
     |> filter(fn: (r) => r["_field"] == "state_code")
     |> group(columns: ["_time"])
     |> filter(fn: (r) => r._value != 0)
+    // Suppress cachemachine pulling messages, which is normal operation
+    |> filter(fn: (r) => (not (r.application == "cachemachine" and strings.hasPrefix(v: r.pod_name, prefix: "jupyter-"))))
     |> map(
         fn:
             (r) =>
