@@ -47,6 +47,9 @@ from(bucket: "multiapp_")
     |> filter(fn: (r) => r._value != 0)
     // Suppress cachemachine pulling messages, which is normal operation
     |> filter(fn: (r) => (not (r.application == "cachemachine" and strings.hasPrefix(v: r.pod_name, prefix: "jupyter-"))))
+    // Also suppress moneypenny initcommission messages, since that too
+    // takes a while when the provisioner actually has to do something.
+    |> filter(fn: (r) => (not (r.application == "moneypenny" and r.container_name == "initcommission" and strings.hasSuffix(v: r.pod_name, suffix: "-pod"))))
     |> map(
         fn:
             (r) =>
