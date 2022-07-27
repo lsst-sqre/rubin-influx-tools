@@ -37,12 +37,19 @@ colorLevel = (v) => {
     return color
 }
 
+// This will also send slack alerts for phase_reason and state_reason
+// non-empty fields.  The corresponding slack checks for those assembly-
+// to-multiapp tasks should simply never return any rows.
+
+// All of those checks will be aggregated into the new synthetic pod_state
+// field.
+
 from(bucket: "multiapp_")
     |> range(start: -5m)
     |> map(fn: (r) => ({r with channel: wh_rec(cluster: r.cluster).channel}))
     |> map(fn: (r) => ({r with webhook_url: wh_rec(cluster: r.cluster)._value}))
     |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
-    |> filter(fn: (r) => r["_field"] == "state_code")
+    |> filter(fn: (r) => (r["_field"] == "pod_state"))
     |> group(columns: ["_time"])
     |> filter(fn: (r) => r._value != 0)
     // Suppress cachemachine pulling messages, which is normal operation
@@ -55,11 +62,12 @@ from(bucket: "multiapp_")
             (r) =>
                 ({r with slack_ret:
                         slack.message(
-                            text: "${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: state ${r.state}, phase ${r.phase}, readiness ${r.readiness}",
+                            text: "${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: state ${r.state}, phase ${r.phase}, readiness ${r.readiness}.  State reason: ${r.state_reason}/phase reason ${r.phase_reason}",
                             color: colorLevel(v: r._value),
                             channel: r.channel,
                             url: r.webhook_url,
                         ),
                 }),
     )
+    |> map(fn:(r) => ({r with alerted: true}))
     |> yield()

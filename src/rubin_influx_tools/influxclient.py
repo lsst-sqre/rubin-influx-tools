@@ -14,9 +14,9 @@ DEFAULT_URL = "http://localhost:8086"
 class InfluxClient:
     """
     This is the base for the Influx classes that do something.  It's little
-    more than an aiohttp session and logger, plus convenience get() and post()
-    methods.  The list_all*() methods are also useful because they spare you
-    having to do manual pagination.
+    more than an aiohttp session and logger, plus convenience get(), post(),
+    and delete() methods.  The list_all*() methods are also useful because
+    they spare you having to do manual pagination.
 
     It wants the same InfluxDBv2 environment variables as InfluxDBv2 or
     Chronograf:
@@ -35,6 +35,7 @@ class InfluxClient:
         url: str = os.getenv("INFLUXDB_URL") or DEFAULT_URL,
         org: str = os.getenv("INFLUXDB_ORG") or DEFAULT_ORG,
         debug: bool = bool(os.getenv("DEBUG")) or False,
+        force: bool = bool(os.getenv("FORCE")) or False,
     ) -> None:
         assert token, "INFLUXDB_TOKEN or token param must be set"
         loglevel = logging.WARNING
@@ -56,6 +57,7 @@ class InfluxClient:
                 "Content-Type": "application/json",
             }
         )
+        self.force = force
 
     async def __aenter__(self) -> Any:
         return self
@@ -100,6 +102,23 @@ class InfluxClient:
         resps = await asyncio.gather(*payload_futs)
         self.log.debug(f"HTTP POST Responses -> {resps}")
         return resps
+
+    async def delete(
+        self,
+        url: str,
+        params: Dict[str, str] = {},
+        use_session_params: bool = True,
+    ) -> Dict[str, Any]:
+        if use_session_params:
+            params.update(self.params)
+        self.log.debug(f"HTTP DELETE -> {url}, params=[{params}]")
+        resp = await self.session.delete(url, params=params)
+        if resp.ok:
+            self.log.debug("HTTP DELETE accepted")
+            return {}
+        obj = await resp.json()
+        self.log.debug(f"HTTP DELETE Response -> {obj}")
+        return obj
 
     async def list_all(
         self, url: str, itemtype: str, pagesize: int = 20

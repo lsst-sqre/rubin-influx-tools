@@ -17,10 +17,42 @@ class TaskMaker(InfluxClient):
 
     async def init_resources(self) -> None:
         self.timing: Dict[str, Dict[str, Union[str, bool]]] = {
-            "restart": {"every": "5m", "offset": "30s", "app": True},
-            "disk_check": {"every": "5m", "offset": "56s", "app": False},
-            "state_check": {"every": "5m", "offset": "17s", "app": True},
-            "cpu_check": {"every": "5m", "offset": "43s", "app": True},
+            "restart": {
+                "every": "5m",
+                "offset": "30s",
+                "app": True,
+                "slack": True,
+            },
+            "disk_check": {
+                "every": "5m",
+                "offset": "56s",
+                "app": False,
+                "slack": True,
+            },
+            "state_check": {
+                "every": "5m",
+                "offset": "17s",
+                "app": True,
+                "slack": True,
+            },
+            "phase_reason_check": {
+                "every": "5m",
+                "offset": "9s",
+                "app": True,
+                "slack": False,
+            },
+            "state_reason_check": {
+                "every": "5m",
+                "offset": "3s",
+                "app": True,
+                "slack": False,
+            },
+            "cpu_check": {
+                "every": "5m",
+                "offset": "43s",
+                "app": True,
+                "slack": True,
+            },
         }
         # This is far too spammy, but leave it around so we remember
         #  how to reenable it.
@@ -28,6 +60,7 @@ class TaskMaker(InfluxClient):
         self.buckets = await self.list_buckets()
         app_buckets = await self.find_application_buckets(self.buckets)
         self.app_names = [x.name for x in app_buckets]
+        self.extant_tasks: List[TaskGet] = []
 
     async def list_buckets(self) -> List[BucketGet]:
         """List all buckets."""
@@ -51,10 +84,22 @@ class TaskMaker(InfluxClient):
         return app_buckets
 
     async def construct_multiapp_bucket(self) -> None:
+        """Build the short-retention bucket for sending alerts"""
         bnames = [x.name for x in self.buckets]
-        if "multiapp_" in bnames:
-            return
-        self.log.debug("Constructing multiapp_ bucket")
+        mn = "multiapp_"
+        if mn in bnames:
+            if not self.force:
+                return
+            # Delete the bucket, since force is set.
+            bkt_id = ""
+            for bkt in self.buckets:
+                if bkt.name == mn:
+                    bkt_id = bkt.id
+                    break
+            url = f"{self.api_url}/buckets/{bkt_id}"
+            self.log.warning(f"Force is set: Deleting {mn} bucket ({bkt_id})")
+            await self.delete(url)
+        self.log.debug(f"Constructing {mn} bucket")
         url = f"{self.api_url}/buckets"
         rr: List[RetentionRule] = [
             {
@@ -63,28 +108,50 @@ class TaskMaker(InfluxClient):
                 "type": "expire",
             }
         ]
-        bkt = BucketPost(
+        bkt_p = BucketPost(
             description="K8s multiple apps tracking bucket",
-            name="multiapp_",
+            name=mn,
             orgID=self.org_id,
             retentionRules=rr,
         )
-        payloads = [asdict(bkt)]
+        payloads = [asdict(bkt_p)]
         await self.post(url, payloads)
 
     async def construct_tasks(self) -> None:
+        """Make all tasks"""
         extant_tasks = await self.list_tasks()
+        self.extant_tasks = extant_tasks
         self._extant_tnames = [x.name for x in extant_tasks]
         offset_mult = 0
+        # If force is set, remove all tasks before proceeding
+        if self.force:
+            await self.delete_tasks()
         for k in self.timing:
-            await self.construct_slack_task(k)
+            if self.timing[k]["slack"]:
+                await self.construct_slack_task(k)
             if self.timing[k]["app"]:
                 await self.construct_named_tasks(k)
             offset_mult += 1
 
+    async def delete_tasks(self) -> None:
+        """If self.force is set, remove existing tasks"""
+        if not self.force:
+            self.log.warning("Force is not set: refusing to delete tasks.")
+            return
+        for tsk in self.extant_tasks:
+            tid = tsk.id
+            tnm = tsk.name
+            url = f"{self.api_url}/tasks/{tid}"
+            self.log.warning(f"Force is set: deleting task {tnm} ({tid})")
+            await self.delete(url)
+        # Clear extant tasks/names, since they no longer exist
+        self.extant_tasks = []
+        self._extant_tnames = []
+
     async def construct_named_tasks(
         self, ttype: str, offset_mult: int = 0
     ) -> None:
+        """Construct tasks for each app (if needed)"""
         apps_needing_tasks = [
             x
             for x in self.app_names
@@ -100,6 +167,7 @@ class TaskMaker(InfluxClient):
         await self.post(url, payloads)
 
     async def construct_slack_task(self, ttype: str) -> None:
+        """Construct the Slack alerting tasks"""
         every = self.timing[ttype]["every"]
         offset = self.timing[ttype]["offset"]
         tname = f"_slack_notify_{ttype}s"
@@ -160,6 +228,7 @@ class TaskMaker(InfluxClient):
         return tasks
 
     async def main(self) -> None:
+        """Construct any missing tasks"""
         await self.init_resources()
         await self.set_org_id()
         await self.construct_multiapp_bucket()
