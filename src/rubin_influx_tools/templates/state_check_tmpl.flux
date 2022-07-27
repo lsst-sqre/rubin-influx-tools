@@ -13,17 +13,18 @@ from(bucket: "{{app_bucket}}")
              _time: r._time,
              _measurement: r._measurement,
              _field: "pod_state",
+             _value: r._value,
              cluster: r.cluster,
              container_name: r.container_name,
              application: "{{app_bucket}}",
              pod_name: r.pod_name,
              phase: r.phase,
-	     phase_reason: "",
+             phase_reason: "",
              state: r.state,
-	     state_code: r._value,
-	     state_reason: "",
+             state_code: r._value,
+             state_reason: "",
              readiness: r.readiness,
-	     alerted: false
+             alerted: false
              })
              )
   |> to(bucket: "multiapp_", org: "square")
