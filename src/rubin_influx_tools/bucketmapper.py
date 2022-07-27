@@ -79,10 +79,25 @@ class BucketMapper(InfluxClient):
 
     async def create_new_dbrps(self) -> None:
         """Create DBRPs in InfluxDB v2"""
+        if self.force:
+            self.log.warning("Force is set: deleting existing DBRPs")
+            await self.delete_dbrps()
         dbrps = await self.prepare_new_dbrps()
         url = self.api_url + "/dbrps"
         payloads = [asdict(x) for x in dbrps]
         await self.post(url, payloads)
 
+    async def delete_dbrps(self) -> None:
+        """If self.force is set, delete all existing DBRPs"""
+        if not self.force:
+            self.log.warning("Force is not set: refusing to delete DBRPs")
+            return
+        dbrps = await self.list_dbrps()
+        for dbrp in dbrps:
+            self.log.warning(f"Removing DBRP for {dbrp.database} ({dbrp.id})")
+            url = f"{self.api_url}/dbrps/{dbrp.id}"
+            await self.delete(url)
+
     async def main(self) -> None:
+        """Construct any missing DBRPs"""
         await self.create_new_dbrps()

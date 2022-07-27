@@ -42,7 +42,7 @@ from(bucket: "multiapp_")
     |> map(fn: (r) => ({r with channel: wh_rec(cluster: r.cluster).channel}))
     |> map(fn: (r) => ({r with webhook_url: wh_rec(cluster: r.cluster)._value}))
     |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
-    |> filter(fn: (r) => r["_field"] == "state_code")
+    |> filter(fn: (r) => (r["_field"] == "pod_state"))
     |> group(columns: ["_time"])
     |> filter(fn: (r) => r._value != 0)
     // Suppress cachemachine pulling messages, which is normal operation
@@ -62,4 +62,5 @@ from(bucket: "multiapp_")
                         ),
                 }),
     )
+    |> map(fn:(r) => ({r with alerted: true}))
     |> yield()
