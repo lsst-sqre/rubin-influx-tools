@@ -35,13 +35,17 @@ class BucketMaker(InfluxClient):
         self.log.debug(f"Needed Buckets -> {needed}")
         await self.create_needed_buckets(needed)
 
-    async def delete_buckets(self, app_set, extant_bkts) -> None:
+    async def delete_buckets(
+        self, app_set: Set[str], extant_bkts: List[BucketGet]
+    ) -> None:
         """Remove all of our buckets, if self.force is set"""
-        ebnames = [x.name for x in extant_bkts]
         if not self.force:
             self.log.warning("Force is not set: refusing to delete buckets")
             return
-        to_remove = [x for x in app_set if x in ebnames]
+        to_remove = []
+        for bkt in extant_bkts:
+            if bkt.name in app_set:
+                to_remove.append(bkt)
         for bkt in to_remove:
             url = "{self.api_url}/buckets/{bkt.id}"
             self.log.warning(f"Removing bucket {bkt.name} ({bkt.id})")

@@ -37,6 +37,13 @@ colorLevel = (v) => {
     return color
 }
 
+// This will also send slack alerts for phase_reason and state_reason
+// non-empty fields.  The corresponding slack checks for those assembly-
+// to-multiapp tasks should simply never return any rows.
+
+// All of those checks will be aggregated into the new synthetic pod_state
+// field.
+
 from(bucket: "multiapp_")
     |> range(start: -5m)
     |> map(fn: (r) => ({r with channel: wh_rec(cluster: r.cluster).channel}))
@@ -55,7 +62,7 @@ from(bucket: "multiapp_")
             (r) =>
                 ({r with slack_ret:
                         slack.message(
-                            text: "${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: state ${r.state}, phase ${r.phase}, readiness ${r.readiness}",
+                            text: "${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: state ${r.state}, phase ${r.phase}, readiness ${r.readiness}.  State reason: ${r.state_reason}/phase reason ${r.phase_reason}",
                             color: colorLevel(v: r._value),
                             channel: r.channel,
                             url: r.webhook_url,
