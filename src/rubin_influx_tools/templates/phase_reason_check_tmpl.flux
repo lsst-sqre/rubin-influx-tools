@@ -9,8 +9,8 @@ stateCode = (v) => {
         else if v == "terminated" then
             1
         else if v == "waiting" then
-	    2
-	else
+            2
+        else
             3
 
     return code
@@ -26,17 +26,18 @@ from(bucket: "{{app_bucket}}")
              _time: r._time,
              _measurement: r._measurement,
              _field: "pod_state",
+             _value: stateCode(v: r.state),
              cluster: r.cluster,
              container_name: r.container_name,
              application: "{{app_bucket}}",
              pod_name: r.pod_name,
              phase: r.phase,
-	     phase_reason: r._value,
+             phase_reason: r._value,
              state: r.state,
-	     state_code: stateCode(v: r.state),
-	     state_reason: "",
+             state_code: stateCode(v: r.state),
+             state_reason: "",
              readiness: r.readiness,
-	     alerted: false
+             alerted: false
              })
              )
   |> to(bucket: "multiapp_", org: "square")
