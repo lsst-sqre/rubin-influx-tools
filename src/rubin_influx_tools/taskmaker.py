@@ -35,18 +35,6 @@ class TaskMaker(InfluxClient):
                 "app": True,
                 "slack": True,
             },
-            "phase_reason_check": {
-                "every": "5m",
-                "offset": "9s",
-                "app": True,
-                "slack": False,
-            },
-            "state_reason_check": {
-                "every": "5m",
-                "offset": "3s",
-                "app": True,
-                "slack": False,
-            },
             "cpu_check": {
                 "every": "5m",
                 "offset": "43s",
