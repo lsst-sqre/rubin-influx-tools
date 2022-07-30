@@ -49,8 +49,8 @@ from(bucket: "multiapp_")
     |> map(fn: (r) => ({r with channel: wh_rec(cluster: r.cluster).channel}))
     |> map(fn: (r) => ({r with webhook_url: wh_rec(cluster: r.cluster)._value}))
     |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
-    |> filter(fn: (r) => r._field == "state_code")
-    |> group(columns: ["_time"])
+    |> filter(fn: (r) => r._field == "pod_state")
+    |> group(columns: ["_measurement", "_field", "_value", "_time", "application", "alerted", "cluster", "container_name", "phase", "phase_reason", "pod_name", "readiness", "state", "state_code", "state_reason"])    
     // Suppress cachemachine pulling messages, which is normal operation
     |> filter(fn: (r) => (not (r.application == "cachemachine" and strings.hasPrefix(v: r.pod_name, prefix: "jupyter-"))))
     // Also suppress moneypenny initcommission messages, since that too
@@ -62,7 +62,7 @@ from(bucket: "multiapp_")
                 ({r with slack_ret:
                         slack.message(
                             text: "${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: state ${r.state}, phase ${r.phase}, readiness ${r.readiness}.  State reason: ${r.state_reason}, phase reason: ${r.phase_reason}",
-                            color: colorLevel(v: r.state_code),
+                            color: colorLevel(v: r._value),
                             channel: r.channel,
                             url: r.webhook_url,
                         ),
