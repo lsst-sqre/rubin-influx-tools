@@ -38,7 +38,7 @@ from(bucket: "{{app_bucket}}")
         phase_reason: if exists r.phase_reason then 
             r.phase_reason
         else
-            ""
+            "n/a"
       })
     )
   |> map(
@@ -46,17 +46,18 @@ from(bucket: "{{app_bucket}}")
         state_reason: if exists r.state_reason then 
             r.state_reason
         else
-            ""
+            "n/a"
     })
   )
   // Pretend it was a pod_state metric all along
   |> map(fn: (r) => ({ r with _field: "pod_state"}))
-  // Why doesn't the _value map work?
-  |> map(fn: (r) => ({ r with _value: r.pod_state}))
   |> map(fn: (r) => ({ r with application: "{{app_bucket}}" }))
   |> map(fn: (r) => ({ r with alerted: false }))
   |> group(columns: ["_measurement", "_field", "_value", "_time", "application", "alerted", "cluster", "container_name", "phase", "phase_reason", "pod_name", "readiness", "state", "state_code", "state_reason"])
   // Remove duplicate timestamps
+  |> drop(columns: ["_value"])
   |> distinct(column: "_time")
+  // Replace _value with correct one
+  |> map(fn: (r) => ({ r with _value: r.state_code}))
   |> to(bucket: "multiapp_", org: "square")
 
