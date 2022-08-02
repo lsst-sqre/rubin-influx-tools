@@ -43,21 +43,22 @@ from(bucket: "{{app_bucket}}")
     )
   |> map(
     fn: (r) => ({ r with 
-        state_reason: if exists r.state_reason then 
-            r.state_reason
+        alerted: if exists r.alerted then 
+            r.alerted
         else
-            "n/a"
+            false
     })
   )
   // Pretend it was a pod_state metric all along
   |> map(fn: (r) => ({ r with _field: "pod_state"}))
   |> map(fn: (r) => ({ r with application: "{{app_bucket}}" }))
+  |> map(fn: (r) => ({ r with strtime: string(v: r._time) }))
+  |> map(fn: (r) => ({ r with message: "${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r.strtime}: state ${r.state}, phase ${r.phase}, readiness ${r.readiness}. State reason: ${r.state_reason}, phase reason: ${r.phase_reason}" }))
   |> map(fn: (r) => ({ r with alerted: false }))
-  |> group(columns: ["_measurement", "_field", "_value", "_time", "application", "alerted", "cluster", "container_name", "phase", "phase_reason", "pod_name", "readiness", "state", "state_code", "state_reason"])
-  // Remove duplicate timestamps
+  |> group(columns: ["_measurement", "_field", "_value", "_time", "alerted", "application", "cluster", "container_name", "message", "phase", "phase_reason", "pod_name", "readiness", "state", "state_code", "state_reason"])
+  // Remove duplicate messages
   |> drop(columns: ["_value"])
-  |> distinct(column: "_time")
+  |> distinct(column: "message")
   // Replace _value with correct one
   |> map(fn: (r) => ({ r with _value: r.state_code}))
   |> to(bucket: "multiapp_", org: "square")
-

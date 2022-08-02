@@ -22,6 +22,7 @@ from(bucket: "{{app_bucket}}")
             cluster: r.cluster,
             container_name: r.container_name,
             application: "{{app_bucket}}",
+            message: "Restart(s) for ${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: ${r._value}",
             phase: r.phase,
             pod_name: r.pod_name,
             readiness: r.readiness,
