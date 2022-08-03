@@ -19,7 +19,8 @@ from(bucket: "{{app_bucket}}")
              application: "{{app_bucket}}",
              pod_name: r.pod_name,
              resource_limits_memory_bytes: r.resource_limits_memory_bytes,
-             memory_usage_bytes: r.memory_usage_bytes
+             memory_usage_bytes: r.memory_usage_bytes,
+             message: "${r.cluster}/${r.container_name}/${r.pod_name} at ${r._time}: ${r._value}% of memory used"
              })
              )
   |> filter(fn: (r) => exists r._value)

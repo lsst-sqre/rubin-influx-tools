@@ -6,6 +6,18 @@ option task = {name: "{{taskname}}", every: {{every}}, offset: {{offset}}}
 
 default_cluster = "roundtable"
 
+needs_alert = (msg) => {
+    record =
+        from(bucket: "alerted_")
+            |> range(start: -1h)
+            |> filter(fn: (r) => r.message == msg)
+            |> findRecord(idx:0, fn: (key) => key.message == msg )
+
+    rv =
+        if exists(record.message) then false else true
+    return rv
+}
+
 wh_rec = (cluster) => {
     default_rec =
         from(bucket: "webhooks_")
@@ -32,16 +44,18 @@ from(bucket: "multiapp_")
     |> filter(fn: (r) => r["_field"] == "differential_restarts")
     |> group(columns: ["_time"])
     |> filter(fn: (r) => r._value != 0)
+    |> filter(fn: (r) => needs_alert(msg: r.message))
     |> map(
         fn:
             (r) =>
                 ({r with slack_ret:
                         slack.message(
-                            text: "Restart(s) for ${r.cluster}/${r.application}/${r.pod_name} (${r.container_name}) at ${r._time}: ${r._value}",
+                            text: r.message,
                             color: "danger",
                             channel: r.channel,
                             url: r.webhook_url,
                         ),
                 }),
     )
+    |> to(bucket:"alerted_", org:"square")
     |> yield()

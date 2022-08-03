@@ -1,5 +1,5 @@
 from dataclasses import asdict
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 from .influxclient import InfluxClient
 from .influxfns import get_template, seconds_to_duration_literal
@@ -71,39 +71,45 @@ class TaskMaker(InfluxClient):
         self.log.debug(f"App Buckets -> {[x.name for x in app_buckets]}")
         return app_buckets
 
-    async def construct_multiapp_bucket(self) -> None:
-        """Build the short-retention bucket for sending alerts"""
+    async def construct_ephemeral_buckets(self) -> None:
+        """Build the short-retention buckets for alerting"""
         bnames = [x.name for x in self.buckets]
-        mn = "multiapp_"
-        if mn in bnames:
-            if not self.force:
-                return
-            # Delete the bucket, since force is set.
-            bkt_id = ""
-            for bkt in self.buckets:
-                if bkt.name == mn:
-                    bkt_id = bkt.id
-                    break
-            url = f"{self.api_url}/buckets/{bkt_id}"
-            self.log.warning(f"Force is set: Deleting {mn} bucket ({bkt_id})")
-            await self.delete(url)
-        self.log.debug(f"Constructing {mn} bucket")
-        url = f"{self.api_url}/buckets"
-        rr: List[RetentionRule] = [
-            {
-                "everySeconds": 3600,
-                "shardGroupDurationSeconds": 3600,
-                "type": "expire",
-            }
-        ]
-        bkt_p = BucketPost(
-            description="K8s multiple apps tracking bucket",
-            name=mn,
-            orgID=self.org_id,
-            retentionRules=rr,
-        )
-        payloads = [asdict(bkt_p)]
-        await self.post(url, payloads)
+        ebnames = ["multiapp_", "alerted_"]
+        payloads: List[Dict[str, Any]] = []
+        for mn in ebnames:
+            if mn in bnames and self.force:
+                # Delete the bucket, since force is set.
+                bkt_id = ""
+                for bkt in self.buckets:
+                    if bkt.name == mn:
+                        bkt_id = bkt.id
+                        break
+                url = f"{self.api_url}/buckets/{bkt_id}"
+                self.log.warning(
+                    f"Force is set: Deleting {mn} bucket ({bkt_id})"
+                )
+                await self.delete(url)
+            if mn not in bnames or self.force:
+                self.log.debug(f"Constructing {mn} bucket")
+                url = f"{self.api_url}/buckets"
+                # One hour is the shortest expiration allowed.
+                rr: List[RetentionRule] = [
+                    {
+                        "everySeconds": 3600,
+                        "shardGroupDurationSeconds": 3600,
+                        "type": "expire",
+                    }
+                ]
+                bkt_p = BucketPost(
+                    description="K8s multiple apps tracking bucket",
+                    name=mn,
+                    orgID=self.org_id,
+                    retentionRules=rr,
+                )
+                payloads.append(asdict(bkt_p))
+
+        if payloads:
+            await self.post(url, payloads)
 
     async def construct_tasks(self) -> None:
         """Make all tasks"""
@@ -219,5 +225,5 @@ class TaskMaker(InfluxClient):
         """Construct any missing tasks"""
         await self.init_resources()
         await self.set_org_id()
-        await self.construct_multiapp_bucket()
+        await self.construct_ephemeral_buckets()
         await self.construct_tasks()

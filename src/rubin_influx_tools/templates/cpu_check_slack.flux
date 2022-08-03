@@ -6,6 +6,18 @@ option task = {name: "{{taskname}}", every: {{every}}, offset: {{offset}}}
 
 default_cluster = "roundtable"
 
+needs_alert = (msg) => {
+    record =
+        from(bucket: "alerted_")
+            |> range(start: -1h)
+            |> filter(fn: (r) => r.message == msg)
+            |> findRecord(idx:0, fn: (key) => key.message == msg )
+
+    rv =
+        if exists(record.message) then false else true
+    return rv
+}
+
 wh_rec = (cluster) => {
     default_rec =
         from(bucket: "webhooks_")
@@ -43,18 +55,20 @@ from(bucket: "multiapp_")
     |> filter(fn: (r) => r["_measurement"] == "kubernetes_pod_container")
     |> filter(fn: (r) => r["_field"] == "cpu_pct")
     |> group(columns: ["_time"])
-    |> filter(fn: (r) => r._value > 90)
+    |> filter(fn: (r) => r._value > 90)  // Should not get a row with less
+    |> group(columns: ["pod_name", "container_name", "cluster", "application_name", "fb", "fl", "message", "_measurement", "_field"])
+    |> filter(fn: (r) => needs_alert(msg: r.message))
     |> map(
         fn:
             (r) =>
                 ({r with slack_ret:
                         slack.message(
-                            text:
-                                "${r.cluster}/${r.application_name}/${r.pod_name} (${r.container_name}) at ${r._time}: ${r._value}% of CPU used",
+                            text: r.message,
                             color: colorLevel(v: r._value),
                             channel: r.channel,
                             url: r.webhook_url,
                         ),
                 }),
     )
+    |> to(bucket: "alerted_", org: "square")
     |> yield()
