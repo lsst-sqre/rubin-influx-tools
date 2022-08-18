@@ -28,27 +28,37 @@ from(bucket: "{{app_bucket}}")
             extractStateCode(v: r.state)
       })
     )
-  // Filter on nonn-running state
+  // Filter on non-running state
   |> filter(fn: (r) => r.state_code != 0)
   // Drop unused columns
   |> drop(columns: ["host", "namespace", "node_name"])
   // canonicalize shape with state/phase reason
   |> map(
-    fn: (r) => ({ r with 
-        phase_reason: if exists r.phase_reason then 
+    fn: (r) => ({ r with
+        state_reason: if exists r.state_reason then
+            r.state_reason
+        else
+            "n/a"
+      })
+    )
+  |> map(
+    fn: (r) => ({ r with
+        phase_reason: if exists r.phase_reason then
             r.phase_reason
         else
             "n/a"
       })
     )
   |> map(
-    fn: (r) => ({ r with 
-        alerted: if exists r.alerted then 
+    fn: (r) => ({ r with
+        alerted: if exists r.alerted then
             r.alerted
         else
             false
     })
   )
+  // Filter on not-successfully-completed
+  |> filter(fn: (r) => not (r.state_code == 1 and r.state_reason == "Completed" and r.phase == "Succeeded"))
   // Pretend it was a pod_state metric all along
   |> map(fn: (r) => ({ r with _field: "pod_state"}))
   |> map(fn: (r) => ({ r with application: "{{app_bucket}}" }))
