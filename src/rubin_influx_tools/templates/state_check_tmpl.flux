@@ -58,7 +58,12 @@ from(bucket: "{{app_bucket}}")
     })
   )
   // Filter on not-successfully-completed
-  |> filter(fn: (r) => not (r.state_code == 1 and r.state_reason == "Completed" and r.phase == "Succeeded"))
+  // Sometimes K8s can take a little while to update "Running", but it's
+  // still a successful completion.
+  |> filter(fn: (r) => not (r.state_code == 1 and r.state_reason == "Completed" and (r.phase == "Succeeded" or r.phase == "Running")))
+  // For now, filter out waiting/Pending/ContainerCreating.  We eventually
+  // need some way of deciding it's taking too long and alerting on that.
+  |> filter(fn: (r) => not (r.state_code == 2 and r.state_reason == "ContainerCreating" and r.phase == "Pending"))
   // Pretend it was a pod_state metric all along
   |> map(fn: (r) => ({ r with _field: "pod_state"}))
   |> map(fn: (r) => ({ r with application: "{{app_bucket}}" }))
