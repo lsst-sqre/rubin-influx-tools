@@ -90,6 +90,7 @@ class DBRPGet:
     orgID: str
     retention_policy: str
     links: list[URILinks] = field(default_factory=list)
+    virtual: bool = False
 
 
 @dataclass
