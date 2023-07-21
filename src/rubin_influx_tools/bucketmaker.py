@@ -55,7 +55,7 @@ class BucketMaker(InfluxClient):
         """Determine (from phalanx config) which applications are active"""
         with tempfile.TemporaryDirectory() as td:
             _ = Repo.clone_from(PHALANX, td)
-            pathname = join(td, "science-platform", "*.yaml")
+            pathname = join(td, "environments", "*.yaml")
             yamls = glob.glob(pathname)
             enabled = set()
             for yml in yamls:
