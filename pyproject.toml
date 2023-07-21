@@ -1,11 +1,30 @@
+name = "rubin-influx-tools"
+description = "Tools for managing InfluxDB2-based monitoring"
+license = { file = "LICENSE" }
+readme = "README.md"
+keywords = ["rubin", "influx", "influxdb", "influxdb2"]
+# https://pypi.org/classifiers/
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Typing :: Typed",
+]
+requires-python = ">=3.11"
+# Use requirements/main.in for runtime dependencies instead.
+dependencies = []
+dynamic = ["version"]
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=61",
     "wheel",
-    "setuptools_scm[toml]>=3.4"
+    "setuptools_scm[toml]>=6.2"
 ]
 build-backend = 'setuptools.build_meta'
-
 [options]
 include_package_data = true
 
@@ -72,7 +91,7 @@ exclude_lines = [
 
 [tool.black]
 line-length = 79
-target-version = ['py39']
+target-version = ['py311']
 exclude = '''
 /(
     \.eggs
@@ -91,7 +110,7 @@ exclude = '''
 [tool.isort]
 include_trailing_comma = true
 multi_line_output = 3
-known_first_party = ["nublado2", "tests"]
+known_first_party = ["rubin-influx-tools", "tests"]
 skip = ["docs/conf.py"]
 
 [tool.pytest.ini_options]
@@ -99,3 +118,15 @@ python_files = [
     "tests/*.py",
     "tests/*/*.py"
 ]
+
+[tool.mypy]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+ignore_missing_imports = true
+local_partial_types = true
+no_implicit_reexport = true
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true

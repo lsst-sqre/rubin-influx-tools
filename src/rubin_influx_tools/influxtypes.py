@@ -159,7 +159,7 @@ class Permission:
     """A Permission for an InfluxDB v2 auth."""
 
     action: str = ""  # "read" or "write"
-    resource: Resource = Resource()
+    resource: Resource = field(default_factory=Resource)
 
 
 @dataclass
@@ -194,6 +194,6 @@ class CheckPost:
     labels: List[Label] = field(default_factory=list)
     offset: str = ""
     orgID: str = ""
-    query: DashboardQuery = DashboardQuery()
+    query: DashboardQuery = field(default_factory=DashboardQuery)
     status: str = "active"
     type: str = "custom"
