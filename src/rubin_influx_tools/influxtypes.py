@@ -1,4 +1,5 @@
 """Types for Rubin Observatory InfluxDB v2 management."""
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Union
 

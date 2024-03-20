@@ -5,7 +5,7 @@ from os.path import join
 from typing import List, Set
 
 import yaml
-from git import Repo  # type: ignore [attr-defined]
+from git import Repo
 
 from .influxclient import InfluxClient
 from .influxtypes import BucketGet, BucketPost, RetentionRule
