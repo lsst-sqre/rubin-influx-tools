@@ -132,18 +132,10 @@ class TaskMaker(InfluxClient):
                 else webhook["channel"]
             )
             cluster = (
-                webhook["phalanx_env"]
-                if webhook["phalanx_env"]
+                webhook["phalanx_host"]
+                if webhook["phalanx_host"]
                 else (
-                    webhook["phalanx_host"]
-                    if webhook["phalanx_host"]
-                    else (
-                        channel[8:]
-                        if channel.startswith("#status-")
-                        else (
-                            channel[1:] if channel.startswith("#") else channel
-                        )
-                    )
+                    channel[7:] if channel.startswith("status-") else channel
                 )
             )
             lp_str += (
