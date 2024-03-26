@@ -1,5 +1,9 @@
+import datetime
+import os
 from dataclasses import asdict
 from typing import Any, Dict, List, Union
+
+import yaml
 
 from .influxclient import InfluxClient
 from .influxfns import get_template, seconds_to_duration_literal
@@ -45,7 +49,13 @@ class TaskMaker(InfluxClient):
         # This is far too spammy, but leave it around so we remember
         #  how to reenable it.
         # "memory_check": {"every": "5m", "offset": "43s", "app": True},
+        # We want to explode if we can't read the variable anyway.
+        self.webhooks = yaml.safe_load(os.environ["WEBHOOKS_YAML"])
         self.buckets = await self.list_buckets()
+        webhook_bkt = await self.find_webhook_bucket()
+        if webhook_bkt:
+            await self.destroy_webhooks_bucket(webhook_bkt)
+        await self.construct_webhooks_bucket()
         app_buckets = await self.find_application_buckets(self.buckets)
         self.app_names = [x.name for x in app_buckets]
         self.extant_tasks: List[TaskGet] = []
@@ -59,6 +69,14 @@ class TaskMaker(InfluxClient):
         self.log.debug(f"Buckets -> {[x.name for x in buckets]}")
         return buckets
 
+    async def find_webhook_bucket(self) -> BucketGet | None:
+        """Return 'webhooks_' bucket if found."""
+        for bk in self.buckets:
+            # We rebuild webhooks_ each time, in case the list has changed.
+            if bk.name == "webhooks_":
+                return bk
+        return None
+
     async def find_application_buckets(
         self, buckets: List[BucketGet]
     ) -> List[BucketGet]:
@@ -70,6 +88,80 @@ class TaskMaker(InfluxClient):
         ]
         self.log.debug(f"App Buckets -> {[x.name for x in app_buckets]}")
         return app_buckets
+
+    async def destroy_webhooks_bucket(self, bkt: BucketGet) -> None:
+        """Destroy the webhooks_ bucket"""
+        url = f"{self.api_url}/buckets/{bkt.id}"
+        self.log.info(f"Deleting 'webhooks_' bucket ({bkt.id})")
+        await self.delete(url)
+
+    async def construct_webhooks_bucket(self) -> None:
+        """Build the bucket containing webhook destinations"""
+        rr: List[RetentionRule] = [
+            {
+                "everySeconds": 0,  # Keep forever
+                "type": "expire",
+            }
+        ]
+        bkt_p = BucketPost(
+            description="Webhook channel destinations",
+            name="webhooks_",
+            orgID=self.org_id,
+            retentionRules=rr,
+        )
+        payload = [asdict(bkt_p)]
+        self.log.info("Constructing 'webhooks_' bucket")
+        url = f"{self.api_url}/buckets"
+        await self.post(url, payload)
+        self.buckets = await self.list_buckets()
+        webhook_bkt = await self.find_webhook_bucket()
+        if webhook_bkt is None:
+            raise RuntimeError("No 'webhooks_' bucket found after creation")
+        await self.populate_webhooks(webhook_bkt)
+
+    async def populate_webhooks(self, bkt: BucketGet) -> None:
+        lp_str = ""
+        now = int(
+            1e9 * datetime.datetime.now(datetime.timezone.utc).timestamp()
+        )
+        for webhook in self.webhooks:
+            url = webhook["webhook_url"]
+            channel = (
+                webhook["channel"][1:]
+                if webhook["channel"].startswith("#")
+                else webhook["channel"]
+            )
+            cluster = (
+                webhook["phalanx_env"]
+                if webhook["phalanx_env"]
+                else (
+                    webhook["phalanx_host"]
+                    if webhook["phalanx_host"]
+                    else (
+                        channel[8:]
+                        if channel.startswith("#status-")
+                        else (
+                            channel[1:] if channel.startswith("#") else channel
+                        )
+                    )
+                )
+            )
+            lp_str += (
+                f"webhook,channel={channel},cluster={cluster}"
+                f' url="{url}" {now}\n'
+            )
+        # Note we have to go through self.session.post and mess with
+        # the session headers, because the data write isn't JSON
+        write_url = f"{self.api_url}/write"
+        self.session.headers.update({"Content-Type": "text/plain"})
+        self.log.debug(f"Writing line protocol:\n----\n{lp_str}\n----\n")
+        await self.session.post(
+            write_url,
+            data=lp_str,
+            params={"org": self.org, "bucket": bkt.id},
+        )
+        # Restore correct Content-Type for everything else.
+        self.session.headers.update({"Content-Type": "application/json"})
 
     async def construct_ephemeral_buckets(self) -> None:
         """Build the short-retention buckets for alerting"""
@@ -223,7 +315,7 @@ class TaskMaker(InfluxClient):
 
     async def main(self) -> None:
         """Construct any missing tasks"""
-        await self.init_resources()
         await self.set_org_id()
+        await self.init_resources()
         await self.construct_ephemeral_buckets()
         await self.construct_tasks()
