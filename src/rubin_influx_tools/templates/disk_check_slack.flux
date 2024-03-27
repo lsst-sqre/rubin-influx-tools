@@ -48,7 +48,7 @@ colorLevel = (v) => {
     return color
 }
 
-from(bucket: "roundtable_internal_")
+from(bucket: "monitoring_internal_")
     |> range(start: -2m)
     |> map(fn: (r) => ({r with channel: wh_rec(cluster: r.cluster).channel}))
     |> map(fn: (r) => ({r with webhook_url: wh_rec(cluster: r.cluster)._value}))
