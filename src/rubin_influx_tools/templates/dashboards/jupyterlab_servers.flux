@@ -1,4 +1,4 @@
-from(bucket: "nublado2")
+from(bucket: "nublado")
   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r["cluster"] == v.cluster)
   |> filter(fn: (r) => r["_measurement"] == "prometheus_hub")
