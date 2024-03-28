@@ -60,7 +60,9 @@ from(bucket: "{{app_bucket}}")
   // Filter on not-successfully-completed
   // Sometimes K8s can take a little while to update "Running", but it's
   // still a successful completion.
-  |> filter(fn: (r) => not (r.state_code == 1 and r.state_reason == "Completed" and (r.phase == "Succeeded" or r.phase == "Running")))
+  // We also sometimes get Pending and Completed--maybe it exits so fast
+  // that it never goes to Running and thence to Succeeded?
+  |> filter(fn: (r) => not (r.state_code == 1 and r.state_reason == "Completed" and (r.phase == "Succeeded" or r.phase == "Running" or r.phase == "Pending")))
   // For now, filter out waiting/Pending/ContainerCreating.  We eventually
   // need some way of deciding it's taking too long and alerting on that.
   |> filter(fn: (r) => not (r.state_code == 2 and r.state_reason == "ContainerCreating" and r.phase == "Pending"))
