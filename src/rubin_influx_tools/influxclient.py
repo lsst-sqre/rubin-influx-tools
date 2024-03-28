@@ -59,7 +59,7 @@ class InfluxClient:
             }
         )
         self.force = force
-        self.org_id: str | None = None  # Will set later
+        self.org_id = ""  # Will set later
 
     async def __aenter__(self) -> Any:
         return self
@@ -162,7 +162,7 @@ class InfluxClient:
         return o_list
 
     async def set_org_id(self) -> None:
-        if self.org_id is not None:
+        if self.org_id:
             return
         obj = await self.get(self.api_url + "/orgs", params={"org": self.org})
         if not obj or "orgs" not in obj or not obj["orgs"]:
