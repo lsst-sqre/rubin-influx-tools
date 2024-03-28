@@ -14,7 +14,7 @@ PHALANX = "https://github.com/lsst-sqre/phalanx.git"
 # ANCILLARY does not include "multiapp_" because it has a different retention
 # policy and is made in taskmaker.
 # "argocd" is implicit everywhere.
-ANCILLARY = ["argocd", "monitoring_internal_", "monitoring_prometheus_"]
+ANCILLARY = ["argocd", "monitoring_prometheus_"]
 
 
 class BucketMaker(InfluxClient):
