@@ -1,10 +1,10 @@
 import "slack"
 
-option v = {bucket: "_monitoring", timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
+option v = {bucket: "monitoring", timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
 
 option task = {name: "{{taskname}}", every: {{every}}, offset: {{offset}}}
 
-default_cluster = "roundtable"
+default_cluster = "roundtable.lsst.cloud"
 
 needs_alert = (msg) => {
     record =
@@ -48,7 +48,7 @@ colorLevel = (v) => {
     return color
 }
 
-from(bucket: "roundtable_internal_")
+from(bucket: "monitoring")
     |> range(start: -2m)
     |> map(fn: (r) => ({r with channel: wh_rec(cluster: r.cluster).channel}))
     |> map(fn: (r) => ({r with webhook_url: wh_rec(cluster: r.cluster)._value}))

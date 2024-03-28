@@ -20,7 +20,7 @@
 				"name": "JupyterLab Servers",
 				"queries": [
 					{
-						"query": "from(bucket: \"nublado2\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_hub\")\n  |> filter(fn: (r) => r[\"_field\"] == \"jupyterhub_running_servers\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"url\", \"prometheus_app\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+						"query": "from(bucket: \"nublado\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_hub\")\n  |> filter(fn: (r) => r[\"_field\"] == \"jupyterhub_running_servers\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"url\", \"prometheus_app\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 						"queryConfig": {
 							"database": "",
 							"measurement": "",
@@ -32,7 +32,7 @@
 								"tags": []
 							},
 							"areTagsAccepted": false,
-							"rawText": "from(bucket: \"nublado2\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_hub\")\n  |> filter(fn: (r) => r[\"_field\"] == \"jupyterhub_running_servers\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"url\", \"prometheus_app\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+							"rawText": "from(bucket: \"nublado\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"cluster\"] == v.cluster)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_hub\")\n  |> filter(fn: (r) => r[\"_field\"] == \"jupyterhub_running_servers\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"url\", \"prometheus_app\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 							"range": null,
 							"shifts": null
 						},
