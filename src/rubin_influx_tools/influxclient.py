@@ -34,7 +34,7 @@ class InfluxClient:
         token: str = os.getenv("INFLUXDB_TOKEN") or "",
         url: str = os.getenv("INFLUXDB_URL") or DEFAULT_URL,
         org: str = os.getenv("INFLUXDB_ORG") or DEFAULT_ORG,
-        org_id: str = os.getenv("INFLUXDB_ORG") or "",
+        org_id: str = os.getenv("INFLUXDB_ORG_ID") or "",
         debug: bool = bool(os.getenv("DEBUG")) or False,
         force: bool = bool(os.getenv("FORCE")) or False,
     ) -> None:
