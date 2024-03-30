@@ -56,11 +56,10 @@ from(bucket: "multiapp_")
     |> filter(fn: (r) => r._measurement == "kubernetes_pod_container")
     |> filter(fn: (r) => r._field == "pod_state")
     |> group(columns: ["_measurement", "_field", "_value", "_time", "application", "alerted", "cluster", "container_name", "phase", "phase_reason", "pod_name", "readiness", "state", "state_code", "state_reason"])
-    // Suppress cachemachine pulling messages, which is normal operation
-    |> filter(fn: (r) => (not (r.application == "cachemachine" and strings.hasPrefix(v: r.pod_name, prefix: "jupyter-"))))
-    // Also suppress moneypenny initcommission messages, since that too
-    // takes a while when the provisioner actually has to do something.
-    |> filter(fn: (r) => (not (r.application == "moneypenny" and r.container_name == "initcommission" and strings.hasSuffix(v: r.pod_name, suffix: "-pod"))))
+    // Suppress prepulling messages
+    |> filter(fn: (r) => (not (r.application == "nublado" and strings.hasPrefix(v: r.pod_name, prefix: "prepull-"))))
+    // Suppress "terminated/Pending/Completed" for Influx tasks
+    |> filter(fn: (r) => (not (r.application == "monitoring" and (strings.hasPrefix(v: r.pod_name, prefix: "bucketmaker") or strings.hasPrefix(v: r.pod_name, prefix: "bucketmapper") or strings.hasPrefix(v: r.pod_name, prefix: "taskmaker")) and r.phase == "Pending" and r.state_reason == "Completed")))
     // Suppress if we have already seen this message
     |> filter(fn: (r) => needs_alert(msg: r.message))
     |> map(
