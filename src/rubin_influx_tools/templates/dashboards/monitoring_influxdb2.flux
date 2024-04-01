@@ -1,4 +1,4 @@
-from(bucket: "roundtable_prometheus_")
+from(bucket: "monitoring")
   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r["_measurement"] == "prometheus_influxdb2")
   |> filter(fn: (r) => r["_field"] == "storage_writer_ok_points_sum")

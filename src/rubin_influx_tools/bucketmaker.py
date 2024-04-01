@@ -5,7 +5,7 @@ from os.path import join
 from typing import List, Set
 
 import yaml
-from git import Repo  # type: ignore [attr-defined]
+from git import Repo
 
 from .influxclient import InfluxClient
 from .influxtypes import BucketGet, BucketPost, RetentionRule
@@ -14,7 +14,7 @@ PHALANX = "https://github.com/lsst-sqre/phalanx.git"
 # ANCILLARY does not include "multiapp_" because it has a different retention
 # policy and is made in taskmaker.
 # "argocd" is implicit everywhere.
-ANCILLARY = ["argocd", "roundtable_internal_", "roundtable_prometheus_"]
+ANCILLARY = ["argocd"]
 
 
 class BucketMaker(InfluxClient):
@@ -61,16 +61,15 @@ class BucketMaker(InfluxClient):
             for yml in yamls:
                 with open(yml, "r") as f:
                     ydoc = yaml.safe_load(f)
-                    self.log.debug(f"{yml} -> {ydoc}")
-                    for yk in ydoc:
-                        obj = ydoc[yk]
-                        # If the top-level key is itself an object, and if
-                        # that object has an "enabled" field, and that field
-                        # is truthy, that key represents an enabled Phalanx
-                        # application.
-                        if type(obj) is dict:
-                            if obj.get("enabled"):
-                                enabled.add(yk.replace("-", "_"))
+                    # The applications are under the "applications" key.
+                    # But Chart.yaml doesn't have one of those.
+                    apps = ydoc.get("applications", {})
+                    self.log.debug(f"{yml} applications -> {apps}")
+                    for app in apps:
+                        # The value will be true if the application is
+                        # enabled.
+                        if app:
+                            enabled.add(app.replace("-", "_"))
             return enabled
 
     async def list_buckets(self) -> List[BucketGet]:

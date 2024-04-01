@@ -34,6 +34,7 @@ class InfluxClient:
         token: str = os.getenv("INFLUXDB_TOKEN") or "",
         url: str = os.getenv("INFLUXDB_URL") or DEFAULT_URL,
         org: str = os.getenv("INFLUXDB_ORG") or DEFAULT_ORG,
+        org_id: str = os.getenv("INFLUXDB_ORG_ID") or "",
         debug: bool = bool(os.getenv("DEBUG")) or False,
         force: bool = bool(os.getenv("FORCE")) or False,
     ) -> None:
@@ -58,6 +59,7 @@ class InfluxClient:
             }
         )
         self.force = force
+        self.org_id = ""  # Will set later
 
     async def __aenter__(self) -> Any:
         return self
@@ -160,12 +162,12 @@ class InfluxClient:
         return o_list
 
     async def set_org_id(self) -> None:
-        obj = await self.get(
-            self.api_url + "/buckets", params={"pagesize": "1"}
-        )
-        if not obj or "buckets" not in obj or not obj["buckets"]:
-            raise RuntimeError("Could not get orgID from bucket")
-        self.org_id = obj["buckets"][0]["orgID"]
+        if self.org_id:
+            return
+        obj = await self.get(self.api_url + "/orgs", params={"org": self.org})
+        if not obj or "orgs" not in obj or not obj["orgs"]:
+            raise RuntimeError(f"Could not get orgID for org {self.org}")
+        self.org_id = obj["orgs"][0]["id"]
 
     async def main(self) -> None:
         # Override this in a subclass to provide "the thing that the class

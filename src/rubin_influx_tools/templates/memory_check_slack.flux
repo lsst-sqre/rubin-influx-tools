@@ -1,10 +1,10 @@
 import "slack"
 
-option v = {bucket: "_monitoring", timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
+option v = {bucket: "monitoring", timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
 
 option task = {name: "{{taskname}}", every: {{every}}, offset: {{offset}}}
 
-default_cluster = "roundtable"
+default_cluster = "roundtable.lsst.cloud"
 
 needs_alert = (msg) => {
     record =

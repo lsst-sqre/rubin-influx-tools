@@ -20,7 +20,7 @@
 				"name": "Storage shard size",
 				"queries": [
 					{
-						"query": "bkts=buckets()\n  |> rename(columns: {\"id\": \"bucket\", \"name\": \"bucketname\"})\n  |> keep(columns: [\"bucket\", \"bucketname\"])\n\nshards=from(bucket: \"roundtable_prometheus_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_shard_disk_size\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"engine\", \"id\", \"prometheus_app\", \"url\", \"walPath\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\njoin(tables: {t1: bkts, t2: shards}, on: [\"bucket\"])\n  |> drop(columns: [\"bucket\"])\n  |> rename(columns: {\"bucketname\": \"bucket\"})\n  |> filter(fn: (r) => r[\"bucket\"] == v.databases)\n  |> yield()",
+						"query": "bkts=buckets()\n  |> rename(columns: {\"id\": \"bucket\", \"name\": \"bucketname\"})\n  |> keep(columns: [\"bucket\", \"bucketname\"])\n\nshards=from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_shard_disk_size\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"engine\", \"id\", \"prometheus_app\", \"url\", \"walPath\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\njoin(tables: {t1: bkts, t2: shards}, on: [\"bucket\"])\n  |> drop(columns: [\"bucket\"])\n  |> rename(columns: {\"bucketname\": \"bucket\"})\n  |> filter(fn: (r) => r[\"bucket\"] == v.databases)\n  |> yield()",
 						"queryConfig": {
 							"database": "",
 							"measurement": "",
@@ -32,7 +32,7 @@
 								"tags": []
 							},
 							"areTagsAccepted": false,
-							"rawText": "bkts=buckets()\n  |> rename(columns: {\"id\": \"bucket\", \"name\": \"bucketname\"})\n  |> keep(columns: [\"bucket\", \"bucketname\"])\n\nshards=from(bucket: \"roundtable_prometheus_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_shard_disk_size\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"engine\", \"id\", \"prometheus_app\", \"url\", \"walPath\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\njoin(tables: {t1: bkts, t2: shards}, on: [\"bucket\"])\n  |> drop(columns: [\"bucket\"])\n  |> rename(columns: {\"bucketname\": \"bucket\"})\n  |> filter(fn: (r) => r[\"bucket\"] == v.databases)\n  |> yield()",
+							"rawText": "bkts=buckets()\n  |> rename(columns: {\"id\": \"bucket\", \"name\": \"bucketname\"})\n  |> keep(columns: [\"bucket\", \"bucketname\"])\n\nshards=from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_shard_disk_size\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"engine\", \"id\", \"prometheus_app\", \"url\", \"walPath\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\njoin(tables: {t1: bkts, t2: shards}, on: [\"bucket\"])\n  |> drop(columns: [\"bucket\"])\n  |> rename(columns: {\"bucketname\": \"bucket\"})\n  |> filter(fn: (r) => r[\"bucket\"] == v.databases)\n  |> yield()",
 							"range": null,
 							"shifts": null
 						},
@@ -137,7 +137,7 @@
 				"name": "Points dropped/errored",
 				"queries": [
 					{
-						"query": "from(bucket: \"roundtable_prometheus_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_dropped_points_sum\" or r[\"_field\"] == \"storage_writer_err_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+						"query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_dropped_points_sum\" or r[\"_field\"] == \"storage_writer_err_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 						"queryConfig": {
 							"database": "",
 							"measurement": "",
@@ -149,7 +149,7 @@
 								"tags": []
 							},
 							"areTagsAccepted": false,
-							"rawText": "from(bucket: \"roundtable_prometheus_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_dropped_points_sum\" or r[\"_field\"] == \"storage_writer_err_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+							"rawText": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_dropped_points_sum\" or r[\"_field\"] == \"storage_writer_err_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 							"range": null,
 							"shifts": null
 						},
@@ -254,7 +254,7 @@
 				"name": "Points written",
 				"queries": [
 					{
-						"query": "from(bucket: \"roundtable_prometheus_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_ok_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+						"query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_ok_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 						"queryConfig": {
 							"database": "",
 							"measurement": "",
@@ -266,7 +266,7 @@
 								"tags": []
 							},
 							"areTagsAccepted": false,
-							"rawText": "from(bucket: \"roundtable_prometheus_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_ok_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+							"rawText": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"prometheus_influxdb2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"storage_writer_ok_points_sum\")\n  |> drop(columns:[\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"path\", \"prometheus_app\", \"url\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 							"range": null,
 							"shifts": null
 						},
@@ -371,7 +371,7 @@
 				"name": "Disk Percentage Used",
 				"queries": [
 					{
-						"query": "from(bucket: \"roundtable_internal_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"disk\")\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")\n  |> filter(fn: (r) => r[\"cluster\"] == \"roundtable\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"device\", \"fstype\", \"mode\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+						"query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"disk\")\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")\n  |> filter(fn: (r) => r[\"cluster\"] == \"roundtable\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"device\", \"fstype\", \"mode\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 						"queryConfig": {
 							"database": "",
 							"measurement": "",
@@ -383,7 +383,7 @@
 								"tags": []
 							},
 							"areTagsAccepted": false,
-							"rawText": "from(bucket: \"roundtable_internal_\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"disk\")\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")\n  |> filter(fn: (r) => r[\"cluster\"] == \"roundtable\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"device\", \"fstype\", \"mode\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+							"rawText": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"disk\")\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")\n  |> filter(fn: (r) => r[\"cluster\"] == \"roundtable\")\n  |> drop(columns: [\"_measurement\", \"_field\", \"_start\", \"_stop\", \"cluster\", \"device\", \"fstype\", \"mode\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
 							"range": null,
 							"shifts": null
 						},
@@ -485,7 +485,7 @@
 				"tempVar": ":databases:",
 				"values": [
 					{
-						"value": "_monitoring",
+						"value": "monitoring",
 						"type": "database",
 						"selected": true
 					}
