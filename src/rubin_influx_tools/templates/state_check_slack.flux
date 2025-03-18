@@ -58,8 +58,9 @@ from(bucket: "multiapp_")
     |> group(columns: ["_measurement", "_field", "_value", "_time", "application", "alerted", "cluster", "container_name", "phase", "phase_reason", "pod_name", "readiness", "state", "state_code", "state_reason"])
     // Suppress prepulling messages
     |> filter(fn: (r) => (not (r.application == "nublado" and strings.hasPrefix(v: r.pod_name, prefix: "prepull-"))))
-    // Suppress "terminated/Pending/Completed" for Influx tasks
-    |> filter(fn: (r) => (not (r.application == "monitoring" and (strings.hasPrefix(v: r.pod_name, prefix: "bucketmaker") or strings.hasPrefix(v: r.pod_name, prefix: "bucketmapper") or strings.hasPrefix(v: r.pod_name, prefix: "taskmaker")) and r.phase == "Pending" and r.state_reason == "Completed")))
+    // Suppress "Pending"; ideally we would alert if Pending went on a
+    // really long time.
+    |> filter(fn: (r) => (r.phase == "Pending" ))
     // Suppress if we have already seen this message
     |> filter(fn: (r) => needs_alert(msg: r.message))
     |> map(
