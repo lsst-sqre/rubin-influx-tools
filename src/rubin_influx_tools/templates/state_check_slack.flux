@@ -60,7 +60,7 @@ from(bucket: "multiapp_")
     |> filter(fn: (r) => (not (r.application == "nublado" and strings.hasPrefix(v: r.pod_name, prefix: "prepull-"))))
     // Suppress "Pending"; ideally we would alert if Pending went on a
     // really long time.
-    |> filter(fn: (r) => (r.phase == "Pending" ))
+    |> filter(fn: (r) => (not (r.phase == "Pending" )))
     // Suppress if we have already seen this message
     |> filter(fn: (r) => needs_alert(msg: r.message))
     |> map(
